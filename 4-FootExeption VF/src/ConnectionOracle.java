@@ -8,7 +8,7 @@ import java.sql.Statement;
 
 public class ConnectionOracle {
     // Configuration pour le conteneur Docker Oracle avec l'utilisateur footform
-    private static final String URL = "jdbc:oracle:thin:@//localhost:1521/EE.oracle.docker";
+    private static final String URL = "jdbc:oracle:thin:@//localhost:1521/FREEPDB1";
     private static final String USER = "footform"; 
     private static final String PASSWORD = "footform"; 
 

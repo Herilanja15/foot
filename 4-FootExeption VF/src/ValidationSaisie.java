@@ -2,13 +2,13 @@ package exception;
 
 public class ValidationSaisie {
 
-    private static final int SECONDE_MAX = 7200; // 120 minutes
+    private static final int SECONDE_MAX = 5400; // 90 minutes
 
     /**
      * Valide la seconde saisie pour une action de match.
      * - Vide ou null : seconde de l'action précédente + 1s.
      * - Pas un nombre ou <= 0 : SecondeInvalideException.
-     * - > 7200 (120 minutes) : SecondeTropGrandeException.
+    * - > 5400 (90 minutes) : SecondeTropGrandeException.
      */
     public static int validerSeconde(String saisieSeconde, int derniereSeconde) throws MatchException {
         // Seconde vide ou null -> temps précédent +1s
@@ -16,7 +16,7 @@ public class ValidationSaisie {
             int automatique = derniereSeconde + 1;
             if (automatique > SECONDE_MAX) {
                 throw new SecondeTropGrandeException(
-                    "Erreur : la seconde automatique (" + automatique + "s) dépasse 120 minutes (7200s) !");
+                    "Erreur : la seconde automatique (" + automatique + "s) dépasse 90 minutes (5400s) !");
             }
             return automatique;
         }
@@ -31,8 +31,11 @@ public class ValidationSaisie {
         if (seconde <= 0) {
             throw new SecondeInvalideException("Erreur : la seconde de l'action doit être strictement supérieure à 0 !");
         }
+        if (seconde < derniereSeconde) {
+            throw new SecondeInvalideException("Erreur : la seconde ne peut pas précéder l'action précédente.");
+        }
         if (seconde > SECONDE_MAX) {
-            throw new SecondeTropGrandeException("Erreur : le match ne peut pas dépasser 120 minutes (7200 secondes) !");
+            throw new SecondeTropGrandeException("Erreur : le match ne peut pas dépasser 90 minutes (5400 secondes) !");
         }
 
         return seconde;

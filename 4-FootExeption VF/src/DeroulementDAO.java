@@ -16,14 +16,16 @@ public class DeroulementDAO {
     public static boolean insererDeroulement(int matchId, int seconde, Joueur joueur, String action, double dx, double dy, Integer cibleId) {
         Connection conn = null;
         PreparedStatement pstmt = null;
+        PreparedStatement scoreStmt = null;
         boolean success = false;
 
         try {
             conn = ConnectionOracle.getConnection();
             if (conn == null) return false;
+            conn.setAutoCommit(false);
 
-            String sql = "INSERT INTO deroulement (id, match_id, seconde, joueur_id, action_realisee, dx, dy, cible_id, mitemps) " +
-                         "VALUES (deroulement_seq.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO deroulement (id, match_id, seconde, joueur_id, action_realisee, dx, dy, cible_id) " +
+                         "VALUES (deroulement_seq.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
 
             pstmt = conn.prepareStatement(sql);
             pstmt.setInt(1, matchId);
@@ -38,23 +40,43 @@ public class DeroulementDAO {
             } else {
                 pstmt.setNull(7, java.sql.Types.INTEGER);
             }
-            int partie = -1;
-            if (seconde <= 2700) {
-                partie = 1;
-            } else if (seconde > 2700 && seconde <= 5400) {
-                partie = 2;
-            } else {
-                partie = 3;
-            }
-            pstmt.setDouble(8, partie);
-
             int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                success = true;
+            if (rowsAffected != 1) {
+                conn.rollback();
+                return false;
             }
+
+            if ("but".equals(action)) {
+                String updateScore = "UPDATE \"MATCH\" SET " +
+                        "score_home = score_home + CASE WHEN equipe_domicile_id = ? THEN 1 ELSE 0 END, " +
+                        "score_away = score_away + CASE WHEN equipe_exterieur_id = ? THEN 1 ELSE 0 END " +
+                        "WHERE id = ? AND (equipe_domicile_id = ? OR equipe_exterieur_id = ?)";
+                scoreStmt = conn.prepareStatement(updateScore);
+                int equipeId = joueur.getEquipe().getId();
+                scoreStmt.setInt(1, equipeId);
+                scoreStmt.setInt(2, equipeId);
+                scoreStmt.setInt(3, matchId);
+                scoreStmt.setInt(4, equipeId);
+                scoreStmt.setInt(5, equipeId);
+                if (scoreStmt.executeUpdate() != 1) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            conn.commit();
+            success = true;
         } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+            }
             System.err.println("Erreur lors de l'insertion du déroulement : " + e.getMessage());
         } finally {
+            if (scoreStmt != null) try { scoreStmt.close(); } catch (SQLException e) { e.printStackTrace(); }
             if (pstmt != null) try { pstmt.close(); } catch (SQLException e) { e.printStackTrace(); }
             ConnectionOracle.closeConnection(conn);
         }

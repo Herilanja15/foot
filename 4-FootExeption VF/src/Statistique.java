@@ -111,7 +111,9 @@ public class Statistique {
             int miTempsLigne = Integer.parseInt(ligne[1]);
             String action = ligne[3];
 
-            if (dansLaPeriode(miTemps, miTempsLigne) && typeTir.equalsIgnoreCase(action)) {
+            boolean tirCorrespond = typeTir.equalsIgnoreCase(action)
+                    || ("cadre".equalsIgnoreCase(typeTir) && "but".equalsIgnoreCase(action));
+            if (dansLaPeriode(miTemps, miTempsLigne) && tirCorrespond) {
                 if (equipeId == ids[0]) {
                     home++;
                 } else if (equipeId == ids[1]) {

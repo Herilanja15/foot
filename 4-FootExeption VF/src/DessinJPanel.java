@@ -23,7 +23,7 @@ import modele.Match;
 public class DessinJPanel extends JPanel {
 
     private static final int DEMI_TEMPS = 2700;  // 45 * 60
-    private static final int FIN_MATCH = 7200;   // 90 * 60
+    private static final int FIN_MATCH = 5400;   // 90 * 60
 
     private CardLayout cardLayout;
     private JPanel mainContainer;
@@ -61,6 +61,7 @@ public class DessinJPanel extends JPanel {
     private CardLayout cardSpecifique;
     private JComboBox<Joueur> cmbCible;
     private JCheckBox chkCadre;
+    private JCheckBox chkBut;
     private JTextField txtDx;
     private JTextField txtDy;
     private JTextField txtSeconde;
@@ -221,6 +222,7 @@ public class DessinJPanel extends JPanel {
         txtDx.setText("0");
         txtDy.setText("0");
         chkCadre.setSelected(false);
+        chkBut.setSelected(false);
         cmbAction.setSelectedIndex(0);
 
         panelAffichage.setVisible(true);
@@ -278,8 +280,18 @@ public class DessinJPanel extends JPanel {
         panelPasse.add(cmbCible);
 
         chkCadre = new JCheckBox("Tir cadré");
+        chkBut = new JCheckBox("But");
+        chkCadre.setEnabled(false);
+        chkBut.setEnabled(false);
+        chkBut.addActionListener(e -> {
+            if (chkBut.isSelected()) chkCadre.setSelected(true);
+        });
+        chkCadre.addActionListener(e -> {
+            if (!chkCadre.isSelected()) chkBut.setSelected(false);
+        });
         JPanel panelTire = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelTire.add(chkCadre);
+        panelTire.add(chkBut);
 
         panelSpecifique.add(panelPasse, "passe");
         panelSpecifique.add(panelTire, "tire");
@@ -287,7 +299,17 @@ public class DessinJPanel extends JPanel {
         gbc.gridy = 4; gbc.gridx = 0; gbc.gridwidth = 2; panel.add(panelSpecifique, gbc);
         gbc.gridwidth = 1;
 
-        cmbAction.addActionListener(e -> cardSpecifique.show(panelSpecifique, (String) cmbAction.getSelectedItem()));
+        cmbAction.addActionListener(e -> {
+            String action = (String) cmbAction.getSelectedItem();
+            cardSpecifique.show(panelSpecifique, action);
+            boolean tir = "tire".equals(action);
+            if (!tir) {
+                chkCadre.setSelected(false);
+                chkBut.setSelected(false);
+            }
+            chkCadre.setEnabled(tir);
+            chkBut.setEnabled(tir);
+        });
 
         // Déplacement et seconde
         txtDx = new JTextField("0", 15);
@@ -357,7 +379,9 @@ public class DessinJPanel extends JPanel {
         btnValider.setVisible(actif);
         cmbAction.setEnabled(actif);
         cmbCible.setEnabled(actif);
-        chkCadre.setEnabled(actif);
+        boolean tir = "tire".equals(cmbAction.getSelectedItem());
+        chkCadre.setEnabled(actif && tir);
+        chkBut.setEnabled(actif && tir);
         txtDx.setEnabled(actif);
         txtDy.setEnabled(actif);
         txtSeconde.setEnabled(actif);
@@ -399,9 +423,10 @@ public class DessinJPanel extends JPanel {
             return;
         }
 
-        // 3. Action à enregistrer : "passe", "cadre" ou "non cadre"
+        // 3. Action à enregistrer : "passe", "cadre", "non cadre" ou "but"
         boolean cadre = chkCadre.isSelected();
-        String action = estPasse ? "passe" : joueurCourant.tirer(cadre);
+        boolean estBut = !estPasse && chkBut.isSelected();
+        String action = estPasse ? "passe" : estBut ? "but" : joueurCourant.tirer(cadre);
         Integer cibleId = estPasse ? Integer.valueOf(cible.getId()) : null;
 
         // 4. Enregistrement en base
@@ -424,8 +449,8 @@ public class DessinJPanel extends JPanel {
             ballon.setX(cible.getX());
             ballon.setY(cible.getY());
         } else {
-            // Tir : un tir cadré est un but, puis nouveau déroulement et remise en place
-            if (cadre) {
+            // Après un tir, un but est ajouté au score; le jeu reprend au centre.
+            if (estBut) {
                 matchActuel.ajoutePourEquipe(joueurCourant.getEquipe());
             }
             numeroDeroulement++;
@@ -442,6 +467,7 @@ public class DessinJPanel extends JPanel {
         txtDx.setText("0");
         txtDy.setText("0");
         chkCadre.setSelected(false);
+        chkBut.setSelected(false);
 
         majAffichage();
         majFormulaire2();

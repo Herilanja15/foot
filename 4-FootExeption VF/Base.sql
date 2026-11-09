@@ -48,12 +48,14 @@ CREATE TABLE "MATCH" (
     equipe_domicile_id  NUMBER NOT NULL,
     equipe_exterieur_id NUMBER NOT NULL,
     date_match          VARCHAR2(50) NOT NULL,
+    score_home          NUMBER DEFAULT 0 NOT NULL,
+    score_away          NUMBER DEFAULT 0 NOT NULL,
     CONSTRAINT fk_match_domicile  FOREIGN KEY (equipe_domicile_id)  REFERENCES equipe(id),
     CONSTRAINT fk_match_exterieur FOREIGN KEY (equipe_exterieur_id) REFERENCES equipe(id),
     CONSTRAINT ck_match_equipes   CHECK (equipe_domicile_id <> equipe_exterieur_id)
 );
 
--- action_realisee : 'passe', 'cadre' ou 'non cadre'
+-- action_realisee : 'passe', 'cadre', 'non cadre' ou 'but'
 -- cible_id : joueur qui reçoit la passe (NULL pour un tir)
 CREATE TABLE deroulement (
     id              NUMBER PRIMARY KEY,
@@ -67,7 +69,12 @@ CREATE TABLE deroulement (
     CONSTRAINT fk_deroulement_match   FOREIGN KEY (match_id)  REFERENCES "MATCH"(id),
     CONSTRAINT fk_deroulement_joueur  FOREIGN KEY (joueur_id) REFERENCES joueur(id),
     CONSTRAINT fk_deroulement_cible   FOREIGN KEY (cible_id)  REFERENCES joueur(id),
-    CONSTRAINT ck_deroulement_seconde CHECK (seconde > 0 AND seconde <= 7200)
+    CONSTRAINT ck_deroulement_seconde CHECK (seconde > 0 AND seconde <= 5400),
+    CONSTRAINT ck_deroulement_action CHECK (action_realisee IN ('passe', 'cadre', 'non cadre', 'but')),
+    CONSTRAINT ck_deroulement_cible_action CHECK (
+        (action_realisee = 'passe' AND cible_id IS NOT NULL)
+        OR (action_realisee IN ('cadre', 'non cadre', 'but') AND cible_id IS NULL)
+    )
 );
 
 -- 4. Vue : mi-temps (1 si <= 2700 s, sinon 2) + durée depuis l'action précédente
