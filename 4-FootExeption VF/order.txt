@@ -1,0 +1,25 @@
+x Deplacable.java (Package modele)
+
+x Ballon.java (Package modele)
+
+x Joueur.java (Package modele)
+
+x Equipe.java (Package modele)
+
+x Match.java (Package modele)
+
+x Classes d'exceptions personnalisées (Gestion des erreurs de saisie : secondes vides, négatives, nulles avec auto-incrément, ou > 7200s)
+
+x ConnectionOracle.java (Package oracleConnection)
+
+x EquipeDAO.java & x MatchDAO.java (Package dao)
+
+x Deroulement.java & x Statistique.java (Package data)
+
+x DeroulementDAO.java & x StatistiqueDAO.java (Package dao)
+
+x DessinJPanel.java & x FenetreJFrame.java (Package gui)
+
+Main.java (Package main ou Aff)
+
+Es-tu prêt à recevoir le premier fichier (Deplacable.java) ?
